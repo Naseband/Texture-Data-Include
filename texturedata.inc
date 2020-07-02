@@ -31,7 +31,7 @@ enum e_OTD_ObjectTextures
 
 // ------------------------------------------------------------ Material Count Data
 
-stock const g_OTD_MaterialCounts[20000] =
+stock const g_OTD_ObjectTextureCounts[20000] =
 {
 	-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,
 	-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,
@@ -46948,11 +46948,11 @@ stock const g_OTD_ObjectTextures[][e_OTD_ObjectTextures] =
 
 // ------------------------------------------------------------ Functions
 
-stock GetModelMaterialCount(model)
+stock GetModelTextureCount(model)
 {
 	if(model < 0 || model >= 20000) return TEXTURE_DATA_INVALID_MODEL;
 
-	return g_OTD_MaterialCounts[model];
+	return g_OTD_ObjectTextureCounts[model];
 }
 
 #if defined OTD_INCLUDE_ALL_TEXTURES
@@ -46961,9 +46961,7 @@ stock GetModelTextureData(model, index, name[], mask[], size_name = sizeof(name)
 {
 	static last_model = -1, last_model_slot = 0; // If multiple textures are read from one model or any model after it, there is no need to loop all over again...
 
-	new i = (last_model <= model) ? last_model_slot : 0;
-
-	for(; i < sizeof(g_OTD_ObjectTextures); i ++)
+	for(new i = (last_model <= model) ? last_model_slot : 0; i < sizeof(g_OTD_ObjectTextures); i ++)
 	{
 		if(g_OTD_ObjectTextures[i][OTD_Model] == model)
 		{
@@ -46987,6 +46985,119 @@ stock GetModelTextureData(model, index, name[], mask[], size_name = sizeof(name)
 	}
 
 	return -1;
+}
+
+enum eOTDSearchMode
+{
+	OTD_SEARCH_EXACT,
+	OTD_SEARCH_FIND,
+	OTD_SEARCH_START,
+	OTD_SEARCH_END
+};
+
+stock FindModelsWithTexture(const search[], bool:ignorecase, model_array[], eOTDSearchMode:search_mode = OTD_SEARCH_FIND, size = sizeof(model_array))
+{
+	new model, name[33], len, count, last_model;
+
+	if(search_mode == OTD_SEARCH_END)
+		len = strlen(search);
+
+	for(new i = 0; i < sizeof(g_OTD_ObjectTextures) && count < size; i ++)
+	{
+		strunpack(name, g_OTD_ObjectTextures[i][OTD_Name], sizeof(name));
+
+		switch(search_mode)
+		{
+			case OTD_SEARCH_EXACT:
+			{
+				if(strcmp(name, search, ignorecase) == 0 && last_model != (model = g_OTD_ObjectTextures[i][OTD_Model]))
+				{
+					model_array[count ++] = model;
+					last_model = model;
+				}
+			}
+			case OTD_SEARCH_FIND:
+			{
+				if(strfind(name, search, ignorecase) != -1 && last_model != (model = g_OTD_ObjectTextures[i][OTD_Model]))
+				{
+					model_array[count ++] = model;
+					last_model = model;
+				}
+			}
+			case OTD_SEARCH_START:
+			{
+				if(strfind(name, search, ignorecase) == 0 && last_model != (model = g_OTD_ObjectTextures[i][OTD_Model]))
+				{
+					model_array[count ++] = model;
+					last_model = model;
+				}
+			}
+			case OTD_SEARCH_END:
+			{
+				if(strfind(name, search, ignorecase) == strlen(name) - len && last_model != (model = g_OTD_ObjectTextures[i][OTD_Model]))
+				{
+					model_array[count ++] = model;
+					last_model = model;
+				}
+			}
+		}
+	}
+
+	return count;
+}
+
+stock FindTextureIndexesForModel(model, const search[], bool:ignorecase, index_array[], eOTDSearchMode:search_mode = OTD_SEARCH_FIND, size = sizeof(index_array))
+{
+	new name[33], len, count;
+
+	if(search_mode == OTD_SEARCH_END)
+		len = strlen(search);
+
+	for(new i = 0; i < sizeof(g_OTD_ObjectTextures) && count < size; i ++)
+	{
+		if(g_OTD_ObjectTextures[i][OTD_Model] == model)
+		{
+			strunpack(name, g_OTD_ObjectTextures[i][OTD_Name], sizeof(name));
+
+			switch(search_mode)
+			{
+				case OTD_SEARCH_EXACT:
+				{
+					if(strcmp(name, search, ignorecase) == 0)
+					{
+						index_array[count ++] = g_OTD_ObjectTextures[i][OTD_Index];
+					}
+				}
+				case OTD_SEARCH_FIND:
+				{
+					if(strfind(name, search, ignorecase) != -1)
+					{
+						index_array[count ++] = g_OTD_ObjectTextures[i][OTD_Index];
+					}
+				}
+				case OTD_SEARCH_START:
+				{
+					if(strfind(name, search, ignorecase) == 0)
+					{
+						index_array[count ++] = g_OTD_ObjectTextures[i][OTD_Index];
+					}
+				}
+				case OTD_SEARCH_END:
+				{
+					if(strfind(name, search, ignorecase) == strlen(name) - len)
+					{
+						index_array[count ++] = g_OTD_ObjectTextures[i][OTD_Index];
+					}
+				}
+			}
+		}
+		else if(g_OTD_ObjectTextures[i][OTD_Model] > model)
+		{
+			break;
+		}
+	}
+
+	return count;
 }
 
 #endif // #if defined OTD_INCLUDE_ALL_TEXTURES
