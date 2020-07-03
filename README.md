@@ -6,7 +6,7 @@ you must define OTD_INCLUDE_ALL_TEXTURES if you want to use it.
 
 Data gathered and compiled using Dk22Pac's GTA SA Plugin SDK.
 
-Functions:
+# Functions:
 
 
 ``GetModelTextureCount(model)``
